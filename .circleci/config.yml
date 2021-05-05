@@ -11,6 +11,8 @@ workflows:
       - compile
       - link
       - shrink
+      - print
+      - valt  
 jobs:
 
   compile:
